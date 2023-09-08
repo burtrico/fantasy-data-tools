@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -20,10 +21,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-0k$l)lsg6$-5n=f&^8qq*io8*efy^#9%nt1xa@b(zv0+6#-k1b'
+SECRET_KEY = config('SECRET_KEY')
+
+YAHOO_APP_ID = config('YAHOO_APP_ID')
+YAHOO_CLIENT_ID = config('YAHOO_CLIENT_ID')
+YAHOO_CLIENT_SECRET = config('YAHOO_CLIENT_SECRET')
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', cast=bool)
 
 ALLOWED_HOSTS = []
 
