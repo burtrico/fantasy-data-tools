@@ -16,7 +16,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from . import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('oauth1/start', views.oauth1_start, name='oauth1_start'),
+    path('oauth1/callback', views.oauth1_callback, name='oauth1_callback'),
 ]
+
