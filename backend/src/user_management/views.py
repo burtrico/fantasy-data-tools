@@ -1,66 +1,42 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
-from requests_oauthlib import OAuth1Session
-from django.contrib.sessions.models import Session
+from django.conf import settings
+from requests_oauthlib import OAuth2Session
 from src.settings.development import YAHOO_CLIENT_ID, YAHOO_CLIENT_SECRET, YAHOO_APP_ID
 
-# Your OAuth 1.0 credentials
-REQUEST_TOKEN_URL = "https://api.twitter.com/oauth/request_token"
-BASE_AUTHORIZATION_URL = "https://api.twitter.com/oauth/authorize"
-CALLBACK_URL = "http://localhost:8000/oauth1_callback"  # Adjust the host and port as necessary
-ACCESS_TOKEN_URL = "https://api.twitter.com/oauth/access_token"
-PROTECTED_RESOURCE_URL = "https://api.twitter.com/1.1/account/verify_credentials.json"
+# OAuth 2.0 credentials and endpoints
+BASE_URL = "https://fantasysports.yahooapis.com/"
+AUTHORIZATION_URL = "https://api.login.yahoo.com/oauth2/request_auth"
+ACCESS_TOKEN_URL = "https://api.login.yahoo.com/oauth2/get_token"
+CALLBACK_URL = "http://localhost:8000/oauth2_callback"
+TEAM_URI = "fantasy/v2/team/"
+PROTECTED_RESOURCE_URL = BASE_URL + TEAM_URI + "nfl.l.511.t.1/roster/players"
 
+def oauth2_start(request):
+    yahoo = OAuth2Session(settings.YAHOO_CLIENT_ID, redirect_uri=CALLBACK_URL)
+    authorization_url, state = yahoo.authorization_url(AUTHORIZATION_URL)
+    
+    # Store state in session for later validation (recommended)
+    request.session['oauth_state'] = state
 
-def oauth1_start(request):
-    oauth = OAuth1Session(YAHOO_CLIENT_ID, client_secret=YAHOO_CLIENT_SECRET)
-    fetch_response = oauth.fetch_request_token(REQUEST_TOKEN_URL)
-    {
-        "oauth_token": "6253282-eWudHldSbIaelX7swmsiHImEL4KinwaGloHANdrY",
-        "oauth_token_secret": "2EEfA6BG3ly3sR3RjE0IBSnlQu4ZrUzPiYKmrkVU"
-    }
-    resource_owner_key = fetch_response.get('oauth_token')
-    resource_owner_secret = fetch_response.get('oauth_token_secret')
-
-    # Save the resource owner credentials in session
-    request.session['resource_owner_key'] = resource_owner_key
-    request.session['resource_owner_secret'] = resource_owner_secret
-
-    authorization_url = oauth.authorization_url(BASE_AUTHORIZATION_URL)
     return redirect(authorization_url)
 
+def oauth2_callback(request):
+    yahoo = OAuth2Session(settings.YAHOO_CLIENT_ID, state=request.session['oauth_state'], redirect_uri=CALLBACK_URL)
+    yahoo.fetch_token(ACCESS_TOKEN_URL, client_secret=settings.YAHOO_CLIENT_SECRET, authorization_response=request.get_full_path())
 
-def oauth1_callback(request):
-    resource_owner_key = request.session.get('resource_owner_key')
-    resource_owner_secret = request.session.get('resource_owner_secret')
-    verifier = request.GET.get('oauth_verifier')
+    # At this point, yahoo is a fully authorized session
+    request.session['oauth_token'] = yahoo.token
 
-    oauth = OAuth1Session(YAHOO_CLIENT_ID,
-                          client_secret=YAHOO_CLIENT_SECRET,
-                          resource_owner_key=resource_owner_key,
-                          resource_owner_secret=resource_owner_secret,
-                          verifier=verifier)
-
-    oauth_tokens = oauth.fetch_access_token(ACCESS_TOKEN_URL)
-
-    request.session['resource_owner_key'] = oauth_tokens.get('oauth_token')
-    request.session['resource_owner_secret'] = oauth_tokens.get('oauth_token_secret')
-
-    return HttpResponse("OAuth1 process completed!")
-
+    return HttpResponse("OAuth2 process completed!")
 
 def access_protected_resource(request):
-    resource_owner_key = request.session.get('resource_owner_key')
-    resource_owner_secret = request.session.get('resource_owner_secret')
-
-    if resource_owner_key and resource_owner_secret:
-        oauth = OAuth1Session(YAHOO_CLIENT_ID,
-                              client_secret=YAHOO_CLIENT_SECRET,
-                              resource_owner_key=resource_owner_key,
-                              resource_owner_secret=resource_owner_secret)
+    oauth_token = request.session.get('oauth_token')
+    
+    if oauth_token:
+        yahoo = OAuth2Session(settings.YAHOO_CLIENT_ID, token=oauth_token)
+        response = yahoo.get(PROTECTED_RESOURCE_URL)
         
-        response = oauth.get(PROTECTED_RESOURCE_URL)
         return HttpResponse(response.content)
     else:
         return HttpResponse("No OAuth credentials stored in session", status=401)
-
