@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
-from django.conf import settings
 from requests_oauthlib import OAuth2Session
-from src.settings.development import YAHOO_CLIENT_ID, YAHOO_CLIENT_SECRET, YAHOO_APP_ID
+from django.conf import settings
+# from src.settings.development import YAHOO_CLIENT_ID, YAHOO_CLIENT_SECRET, YAHOO_APP_ID
 
 # OAuth 2.0 credentials and endpoints
 BASE_URL = "https://fantasysports.yahooapis.com/"

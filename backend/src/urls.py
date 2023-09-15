@@ -20,7 +20,7 @@ from . import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('oauth1/start', views.oauth1_start, name='oauth1_start'),
-    path('oauth1/callback', views.oauth1_callback, name='oauth1_callback'),
+    path('oauth2/start', views.oauth2_start, name='oauth2_start'),
+    path('oauth2/callback', views.oauth2_callback, name='oauth2_callback'),
 ]
 
