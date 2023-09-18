@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from requests_oauthlib import OAuth2Session
 from django.conf import settings
+from rest_framework_jwt.settings import api_settings
 # from src.settings.development import YAHOO_CLIENT_ID, YAHOO_CLIENT_SECRET, YAHOO_APP_ID
 
 # OAuth 2.0 credentials and endpoints
@@ -28,7 +29,19 @@ def oauth2_callback(request):
     # At this point, yahoo is a fully authorized session
     request.session['oauth_token'] = yahoo.token
 
-    return HttpResponse("OAuth2 process completed!")
+    # Create JWT
+    jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
+    jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+
+    payload = jwt_payload_handler(user)  # You would need to get or create a Django user object here
+    token = jwt_encode_handler(payload)
+
+    response_data = {
+        'token': token,
+        # ... (any other data you want to include in the response)
+    }
+
+    return JsonResponse(response_data)
 
 def access_protected_resource(request):
     oauth_token = request.session.get('oauth_token')
