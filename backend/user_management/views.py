@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from requests_oauthlib import OAuth2Session
 from django.conf import settings
 from rest_framework_jwt.settings import api_settings
-# from src.settings.development import YAHOO_CLIENT_ID, YAHOO_CLIENT_SECRET, YAHOO_APP_ID
+# from settings.development import YAHOO_CLIENT_ID, YAHOO_CLIENT_SECRET, YAHOO_APP_ID
 
 # OAuth 2.0 credentials and endpoints
 BASE_URL = "https://fantasysports.yahooapis.com/"
